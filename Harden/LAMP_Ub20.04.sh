@@ -18,7 +18,7 @@ echo -e "\n\n Permissions have been set\n"
 
 echo -e "\n\nEnabling Modules\n"
 sudo a2enmod rewrite
-#sudo phpenmod mcrypt
+sudo yes '' | pecl install mcrypt && echo "extension=mcrypt.so" > /etc/php/7.4/mods-available/mcrypt.ini && phpenmod mcrypt
 
 echo -e "\n\nRestarting Apache\n"
 sudo service apache2 restart #or systemctl restart apache2

@@ -1,0 +1,27 @@
+#!/bin/bash
+#11/17/21 Draft
+
+echo "Installing wordpress-cli"
+curl -L https://github.com/wp-cli/wp-cli/releases/download/v2.5.0/wp-cli-2.5.0.phar -o wp-cli.phar
+chmod +x wp-cli.phar
+
+echo "setting up wp-cli binary in /usr/local/bin"
+mv wp-cli.phar /usr/local/bin/wp-cli
+
+echo "Creating wordpress Mysql database"
+mysql -u root -e 'create database wordpress;' #probably should work with a password
+
+echo "Creating wordpress user on mysql"
+mysql -u root -e "CREATE USER 'wpuser'@'localhost' IDENTIFIED BY 'password';" #probably get user input or something for a secure password
+
+echo "granting privileges"
+mysql -u root -e "grant all privileges on wordpress.* to wpuser@localhost;"
+
+echo "making wordpress directory in /var/www/html"
+mkdir /var/www/html/wordpress
+
+echo "installing wordpress and making configurations "
+cd /var/www/html/wordpress && wp-cli core download && wp core config --dbname=wordpress --dbuser=wpuser --dbpass=password
+cd /var/www/html/wordpress && wp-cli core install --url=http://localhost:80/wordpress --admin_user=admin --admin_password=password --title=Wordpress --email=admin@localhost.com
+
+

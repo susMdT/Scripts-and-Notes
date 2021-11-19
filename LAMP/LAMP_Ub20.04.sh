@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo -e "\n\nUpdating Apt Packages and upgrading latest patches\n"
-sudo apt update -y && sudo apt upgrade -y && sudo apt install curl -y#clear
+sudo apt update -y && sudo apt upgrade -y && sudo apt install curl -y #clear
 
 echo -e "\n\nInstalling Apache2 Web server\n"
 sudo apt install apache2 apache2-doc apache2-utils libexpat1 ssl-cert -y #prefork for managing processes/threading apache things

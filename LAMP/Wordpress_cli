@@ -26,4 +26,4 @@ cd /var/www/html/wordpress &&  wp-cli core download && wp-cli core config --dbna
 cd /var/www/html/wordpress &&  wp-cli core install --url=http://localhost:80/wordpress --admin_user=admin --admin_password=password --title=Wordpress --admin_email=admin@localhost.com
 sudo chown -R www-data /var/www/html/wordpress
 sudo chgrp -R www-data /var/www/html/wordpress
-sudo chmod 757 -R /var/www/html/wordpress
+sudo chmod 755 -R /var/www/html/wordpress

@@ -6,22 +6,22 @@ curl -L https://github.com/wp-cli/wp-cli/releases/download/v2.5.0/wp-cli-2.5.0.p
 chmod +x wp-cli.phar
 
 echo "setting up wp-cli binary in /usr/local/bin"
-mv wp-cli.phar /usr/local/bin/wp-cli
+sudo mv wp-cli.phar /usr/local/bin/wp-cli
 
 echo "Creating wordpress Mysql database"
-mysql -u root -e 'create database wordpress;' #probably should work with a password
+sudo mysql -u root -e 'create database wordpress;' #probably should work with a password
 
 echo "Creating wordpress user on mysql"
-mysql -u root -e "CREATE USER 'wpuser'@'localhost' IDENTIFIED BY 'password';" #probably get user input or something for a secure password
+sudo mysql -u root -e "CREATE USER 'wpuser'@'localhost' IDENTIFIED BY 'password';" #probably get user input or something for a secure password
 
 echo "granting privileges"
-mysql -u root -e "grant all privileges on wordpress.* to wpuser@localhost;"
+sudo mysql -u root -e "grant all privileges on wordpress.* to wpuser@localhost;"
 
 echo "making wordpress directory in /var/www/html"
-mkdir /var/www/html/wordpress
+sudo mkdir /var/www/html/wordpress
 
 echo "installing wordpress and making configurations "
-cd /var/www/html/wordpress && wp-cli core download && wp core config --dbname=wordpress --dbuser=wpuser --dbpass=password
-cd /var/www/html/wordpress && wp-cli core install --url=http://localhost:80/wordpress --admin_user=admin --admin_password=password --title=Wordpress --email=admin@localhost.com
-
-
+cd /var/www/html/wordpress && sudo wp-cli core download && wp core config --dbname=wordpress --dbuser=wpuser --dbpass=password
+cd /var/www/html/wordpress && sudo wp-cli core install --url=http://localhost:80/wordpress --admin_user=admin --admin_password=password --title=Wordpress --email=admin@localhost.com
+sudo chown -R www-data /var/www/html/wordpress
+sudo chgrp -R www-data /var/www/html/wordpress

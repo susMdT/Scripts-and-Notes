@@ -22,8 +22,8 @@ sudo mkdir /var/www/html/wordpress
 sudo chmod -R 777 /var/www/html/wordpress
 
 echo "installing wordpress and making configurations "
-cd /var/www/html/wordpress && sudo wp-cli core download && wp core config --dbname=wordpress --dbuser=wpuser --dbpass=password
-cd /var/www/html/wordpress && sudo wp-cli core install --url=http://localhost:80/wordpress --admin_user=admin --admin_password=password --title=Wordpress --email=admin@localhost.com
+cd /var/www/html/wordpress && sudo wp-cli core download --allow-root && wp core config --dbname=wordpress --dbuser=wpuser --dbpass=password --allow-root 
+cd /var/www/html/wordpress && sudo wp-cli core install --url=http://localhost:80/wordpress --admin_user=admin --admin_password=password --title=Wordpress --email=admin@localhost.com --allow-root
 sudo chown -R www-data /var/www/html/wordpress
 sudo chgrp -R www-data /var/www/html/wordpress
 sudo chmod 757 /var/www/html/wordpress

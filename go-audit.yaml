@@ -58,17 +58,14 @@ output:
     tag: "audit-thing"
 
   # Appends logs to a file
-  file:
-    enabled: false
+  file: 
+    enabled: true
     attempts: 2
-
     # Path of the file to write lines to
     # The actual file will be created if it is missing but make sure the parent directory exists
-    path: /var/log/go-audit/go-audit.log
-
+    path: /var/log/goaudit.log
     # Octal file mode for the log file, make sure to always have a leading 0
     mode: 0600
-
     # User and group that should own the log file
     user: root
     group: root
@@ -150,16 +147,3 @@ extras:
     pid_cache: 0
     # number of container_id -> docker_details to cache (0 means disable cache)
     docker_cache: 0
-output:
-# Appends logs to a file
-  file: 
-    enabled: true
-    attempts: 2
-    # Path of the file to write lines to
-    # The actual file will be created if it is missing but make sure the parent directory exists
-    path: /var/log/goaudit.log
-    # Octal file mode for the log file, make sure to always have a leading 0
-    mode: 0600
-    # User and group that should own the log file
-    user: root
-    group: root

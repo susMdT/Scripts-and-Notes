@@ -54,7 +54,7 @@ class Parser():
             self.parsedJson.refresh() #flushing the dirt out
             self.parsedJson.time = datetime.datetime.fromtimestamp(float(item.get("timestamp")))
             for messages in item.get("messages"):
-                if messages.get("type") == 1327:
+                if messages.get("type") == 1327: #proctitle stuff
                     proctitleHex = messages.get("data")
                     try:
                         self.parsedJson.cmd=bytes.fromhex(proctitleHex.replace("proctitle=", "")).decode("ascii").replace("\x00", " ")
@@ -62,20 +62,27 @@ class Parser():
                         self.parsedJson.cmd=proctitleHex
                 if messages.get("type") == 1307: #self.cwd
                     self.parsedJson.cwd = messages.get("data")
-                if messages.get("type") == 1300: #self.key                              
-                    self.parsedJson.key = "Key: "
+                if messages.get("type") == 1300: #self.key     and uid                         
+                    self.parsedJson.key = "Key: " #key
                     try:
                         self.parsedJson.key += messages.get("data").partition("key=")[2]
                     except:
                         self.parsedJson.key += "Unknown"
-            if len(item.get("uid_map")) == 2:
-                temparr = []
-                for user in item.get("uid_map"):
-                    temparr.append(user)
-                self.parsedJson.uid="{}, originally {}".format(item.get("uid_map").get(temparr[0]), item.get("uid_map").get(temparr[1]))
-            elif len(item.get("uid_map")) == 1:
-                for user in item.get("uid_map"):
-                    self.parsedJson.uid=item.get("uid_map").get("user")
+                    try:#uid
+                        #euid = re.findall(r'\beuid=+\w{4}\b', messages.get("data"))
+                        euid = messages.get("data").partition("euid=")[2].split()[0]
+                    except:
+                        euid = "N/A"
+                    try:
+                        #auid = re.findall(r'\bauid=+\w{4}\b', messages.get("data"))
+                        auid = messages.get("data").partition("auid=")[2].split()[0]
+                    except:
+                        auid = "N/A"
+                    try:
+                        self.parsedJson.uid = "{}, originally {}".format(item.get("uid_map").get(euid), item.get("uid_map").get(auid))
+                    except:
+                        self.parsedJson.uid = "N/A"
+
             if self.parsedJson.isValid():
                 self.add_event(self.parsedJson)
 
@@ -97,38 +104,6 @@ class Parser():
                         self.rawJson.append(json.loads(line))
                     elif current_line >= line_count and len(Parser.parsed_events) == 0:
                         self.rawJson.append(json.loads(line))
-                        '''
-                        event = json.loads(line)
-                        self.parsedJson.refresh()
-                        self.parsedJson.time = datetime.datetime.fromtimestamp(float(event.get("timestamp")))
-                        for messages in event.get("messages"):
-                            if messages.get("type") == 1327:
-                                proctitleHex = messages.get("data")
-                                try:
-                                    self.parsedJson.cmd=bytes.fromhex(proctitleHex.replace("proctitle=", "")).decode("ascii").replace("\x00", " ")
-                                except:
-                                    self.parsedJson.cmd=proctitleHex
-                            if messages.get("type") == 1307: #self.cwd
-                                self.parsedJson.cwd = messages.get("data")
-                            if messages.get("type") == 1300: #self.key                              
-                                self.parsedJson.key = "Key: "
-                                try:
-                                    self.parsedJson.key += messages.get("data").partition("key=")[2]
-                                except:
-                                    self.parsedJson.key += "Unknown"
-                        if len(event.get("uid_map")) == 2:
-                            temparr = []
-                            for user in event.get("uid_map"):
-                                temparr.append(user)
-                            self.parsedJson.uid="{}, originally {}".format(event.get("uid_map").get(temparr[0]), event.get("uid_map").get(temparr[1]))
-                        elif len(event.get("uid_map")) == 1:
-                            for user in event.get("uid_map"):
-                                self.parsedJson.uid=event.get("uid_map").get("user")
-                    current_line+=1
-                
-                    if self.parsedJson.isValid():
-                        self.add_event(self.parsedJson)
-                    '''
                     current_line += 1
             Parser.files.update({file_to_parse : current_line})
             #self.jsonArrayParser(self.rawJson)
@@ -142,118 +117,9 @@ class Parser():
             return []
 
     def add_event(self, event):
-        #key = re.search('(?<= key=)(\w+)', event)
-        #event_type = re.search(r'\b(?<=type=)(\w+)', event)
-        '''
-        try:
-            if 'proctitle=grep' in event:
-                cmd = 'Command=\''+re.search('(?<= proctitle=)(.+)', event).group(0)+'\''
-                uid = re.search('auid=\w+ uid=\w+', event).group(0)
-                description = '\n' + uid.replace(' ', ', ') + '\n'
-                result = ('GREP Event: '+cmd, cmd+description)
-            elif key.group(0) == 'user_modification':
-                result = self.user_event(event)
-            elif key.group(0) == 'recon':
-                result = self.recon_event(event)
-            elif event_type.group(0) == 'USER_AUTH':
-                result = self.auth_event(event)
-            elif key.group(0) == 'rootcmd':
-                result = self.rootcmd_event(event)
-            else:
-                result = (key.group(0), event)
-        except AttributeError:
-            if event_type and event_type.group(0) == 'USER_AUTH':
-                result = self.auth_event(event)
-            else:
-                result = ('NO KNOWN FORMAT FOR EVENT', event)
-        Parser.parsed_events.append( result )
-        '''
         result = (event.key, event.toString())
         Parser.parsed_events.append(result)
-    '''
-    def rootcmd_event(self, event):
-        title = 'rootcmd: '
-        description = event
-        try:
-            m = re.search('(?<= proctitle=).+', event)
-            title += m.group(0).strip()
-        except AttributeError:
-            title += 'cannot determine command'
-        return (title, description)
 
-    def auth_event(self, event):
-        title = 'Unknown auth event'
-        description = ''
-        try:
-            acct = re.search('(?<= acct=)(\S+)', event).group(0)
-            exe = re.search('(?<= exe=)(\S+)', event).group(0)
-            addr = re.search('(?<= addr=)(\S+)', event).group(0)
-            description += 'Account: '+acct+'\n'
-            description += 'Command: '+exe+'\n'
-            description += 'Address: '
-            description += addr if not addr == '?' else 'localhost'+'\n'
-            description += 'key=USER_AUTH\n'
-            description += '\n'+event+'\n'
-            title += ': Acct = '+acct+' | exe = '+exe
-        except AttributeError:
-            return (title, description)
-        return ( title, description )
-
-    def recon_event(self, event):
-        key = 'recon'
-        pid = int(re.search('(?<= pid=)(\d+)', event).group(0))
-        ppid = int(re.search('(?<= ppid=)(\d+)', event).group(0))
-        title = 'Uknown RECON event'
-        description = ''
-        process_tree = [pid]
-        is_ssh = False
-        is_reverse_shell = False
-        found = True
-        while not ppid in (0, 1) and found:
-            found = False
-            for entry in TUI.alerts:
-                if entry.pid == ppid: 
-                    ppid = entry.ppid
-                    found = True
-                    TUI.header.contents[1][0].set_text(str(ppid))
-                    if '/ssh' in entry.message:
-                        is_ssh = True
-                    if '/nc' in entry.message:
-                        is_reverse_shell = True
-                    break;
-            process_tree.append(ppid)
-        
-        description += 'Full Process Tree:\n' + str(process_tree) + '\n'
-        description += 'Event info: key=recon\n'
-        description += '\n'+event+'\n'
-
-        if is_ssh:
-            title = 'Probably an ssh Session'
-        elif is_reverse_shell:
-            title = 'Probably a reverse Shell'
-        else:
-            title = 'Probably not a reverse Shell'
-        return ( title, description )
-
-    def user_event(self, event):
-        title = 'Unknown user event'
-        try:
-            m = re.search('(?<= proctitle=).+', event)
-            result = m.group(0).strip()
-            if 'useradd' in result or 'adduser' in result:
-                title = 'New user detected \''+ result[result.rindex(' ')+1:]+'\''
-            elif 'userdel' in result or 'deluser' in result:
-                title = 'User deleted \''+ result[result.rindex(' ')+1:]+'\''
-        except AttributeError:
-            title = m
-        try:
-            m = re.search('(?<=type=SYSCALL ).+', event)
-            description = m.group(0).strip()
-            description += '\n\n'+event+'\n'
-        except AttributeError:
-            description = m
-        return ( title, description )
-    '''
 class PopUpDialog(urwid.WidgetWrap):
     """A dialog that appears with nothing but a close button """
     signals = ['close']
@@ -284,21 +150,7 @@ class Alert(urwid.PopUpLauncher):
         urwid.connect_signal(self.original_widget, 'click',
             lambda button: self.open_pop_up())
         self.pop_up = PopUpDialog('\n'+title+'\n',message)
-        self.message = message
-        '''
-        try:
-            self.pid = int(re.search('(?<= pid=)(\d+)', message).group(0))
-        except AttributeError:
-            self.pid = 0
-        try:
-            self.ppid = int(re.search('(?<= ppid=)(\d+)', message).group(0))
-        except AttributeError:
-            self.ppid = 0
-        try:
-            self.key = re.search('(?<= key=)(\w+)', message).group(0)
-        except AttributeError:
-            self.key = ''
-        '''    
+        self.message = message   
         TUI.header.contents[1][0].set_text('Last event: '+str(Alert.count))
 
     def create_pop_up(self):
@@ -461,7 +313,7 @@ class TUI():
                 if exists(check):
                     bg_color = 'c_bg'
                     streak = urwid.AttrMap(urwid.Text(('c_banner', u'nothing detected'), align='center'), 'c_streak')
-                    break;
+                    break
         else:
             streak = urwid.AttrMap(urwid.Text(('warning', u'Press any button...'), align='center'), 'warning')
         background = urwid.AttrMap(TUI.placeholder,  bg_color)

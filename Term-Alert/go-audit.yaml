@@ -36,7 +36,7 @@ output:
     path: /var/log/go-audit.log
 
     # Octal file mode for the log file, make sure to always have a leading 0
-    mode: 0666
+    mode: 0400
 
     # User and group that should own the log file
     user: nobody
@@ -96,7 +96,7 @@ output:
     path: /var/log/go-audit.log
 
     # Octal file mode for the log file, make sure to always have a leading 0
-    mode: 0666
+    mode: 0400
 
     # User and group that should own the log file
     user: nobody

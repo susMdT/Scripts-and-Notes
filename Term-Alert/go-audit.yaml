@@ -39,8 +39,8 @@ output:
     mode: 0400
 
     # User and group that should own the log file
-    user: nobody
-    group: nogroup
+    user: root
+    group: root
 
 # Configure logging, only stdout and stderr are used.
 log:
@@ -99,8 +99,8 @@ output:
     mode: 0400
 
     # User and group that should own the log file
-    user: nobody
-    group: nogroup
+    user: root
+    group: root
 
 # Configure logging, only stdout and stderr are used.
 log:

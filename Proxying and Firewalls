@@ -1,0 +1,87 @@
+## Users of Services
+
+/lib/systemd/system/mariadb.service
+
+/etc/apache2/envvars
+
+/etc/nginx/nginx.conf
+
+## Dockerizing Services
+
+docker cp iker.py 766c:/ 
+
+copying files to running container: `docker cp file containertag:/path` 
+
+`docker run -it image /bin/bash` to make it persistent if its default entrypoint script doesn't
+
+`docker exec -it containerid /bin/bash` to interact and debug
+
+`docker commit containerid` to turn container to image (will still have its default entrypoint behavior when ran)
+
+## iptables shit 
+
+Default Rules:
+
+​	iptables -P <CHAIN_NAME> <POLICY>
+
+iptables -A INPUT  -p tcp --dport 80  -m conntrack --ctstate NEW,ESTABLISHED,RELATED  -s 10.110.208.47/21 -j ACCEPT  
+
+iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT 
+
+iptables -A OUTPUT -s 10.110.208.47/21  -p tcp --dport 80  -m conntrack --ctstate NEW,ESTABLISHED,RELATED  -j ACCEPT 
+
+iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+## Static IPs and Reverse Proxying
+
+ubuntu 20.04: `/etc/netplan/01-network-manager-all.yaml`
+
+```
+# Let NetworkManager manage all devices on this system
+network:
+  version: 2
+  renderer: NetworkManager
+  ethernets:
+    enp0s3:
+      dhcp4: no
+      addresses:
+        - 10.0.0.68/24 # ==>localhost:50000
+        - 10.0.0.69/24 # ==>10.0.0.71:80
+        - 10.0.0.70/24 # ==>normal web root
+      gateway4: 10.0.0.1
+      nameservers:
+        addresses: [8.8.8.8, 1.1.1.1] #probably want to think about DNS
+
+```
+
+`netplan apply`
+
+in the /etc/nginx/sites-enabled/default
+
+```
+server{
+        listen 80;
+        listen 443;
+        listen 8080;
+        listen [::]:8080;
+        server_name     10.0.0.68;
+
+        location / {
+                proxy_pass "http://localhost:50000" ;
+        }
+}
+
+server{
+        listen 80;
+        listen 443;
+        listen 8080;
+        listen [::]:8080;
+        server_name     10.0.0.69;
+
+        location / {
+                proxy_pass "http://10.0.0.57:80" ;
+        }
+}
+
+```
+

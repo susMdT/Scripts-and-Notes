@@ -75,7 +75,7 @@ def render():
             return render_template('render.html', files=uploadedFiles, uploadDir=uploadDirectory, data=render_template_string(file_contents))
         except:
             return render_template('render.html', files=uploadedFiles, uploadDir=uploadDirectory, data='Couldn\'t Render it  ¯\_(ツ)_/¯')
-    return render_template('render.html', files=uploadedFiles, uploadDir=uploadDirectory, data='\n\n\n\n\n\n\n\n\n\nballs') #Get Request
+    return render_template('render.html', files=uploadedFiles, uploadDir=uploadDirectory, data='\n\n\n\n\n\n\n\n\n\n') #Get Request
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

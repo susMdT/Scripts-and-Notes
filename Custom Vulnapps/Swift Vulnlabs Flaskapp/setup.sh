@@ -1,5 +1,5 @@
 #!/bin/bash
-apt update ; apt install subversion python3 python-pip -y
+apt update ; apt install subversion python3 python3-pip -y
 svn export 'https://github.com/susMdT/Scripts-and-Notes/trunk/Custom Vulnapps/Swift Vulnlabs Flaskapp'
 pip install flask
 mv 'Swift Vulnlabs Flaskapp' flaskapp

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Development Application</title>
+<style>
+    .wrapped-text {
+    white-space: pre-wrap;
+}
+</style>
+</head>
+<body>
+    <div style="text-align: center;">
+        <h1>Development Application</h1>
+        <h2>Testing remote file sharing</h2>
+        <h3>Author: Ralph</h3>
+        <h4>Upload Directory: {{uploadDir}}</h4>
+        <h4>Files in the upload directory:</h4>
+        {% for file in files %}
+        <p>{{file}}</p> 
+        {% endfor %}
+        <p>Enter file to upload</p>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <input type="file" name="file">
+            <input type="submit" value="Upload">
+        </form>
+        <div style="text-align: center; padding-left:25%; padding-right:25%; max-width:50%;">
+            <p class="wrapped-text" style="outline: 5px solid rgb(0,0,0); text-align: left; min-height: 30%" >{{data}}</p>
+        </div>
+    </div>
+    
+</body>
+</html>

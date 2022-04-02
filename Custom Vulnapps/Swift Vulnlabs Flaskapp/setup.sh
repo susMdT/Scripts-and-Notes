@@ -4,5 +4,5 @@ svn export 'https://github.com/susMdT/Scripts-and-Notes/trunk/Custom Vulnapps/Sw
 pip install flask
 mv 'Swift Vulnlabs Flaskapp' flaskapp
 cd flaskapp ; rm setup.sh ; cd .. ; rm $(basename "$0")
-env WERKZEUG_DEBUG_PIN=off python3 app.py
+cd flaskapp ; env WERKZEUG_DEBUG_PIN=off python3 app.py
 

